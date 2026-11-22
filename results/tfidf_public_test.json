@@ -1,0 +1,22 @@
+{
+  "weakness": {
+    "precision": 0.7629318059781636,
+    "recall": 0.8480899323517708,
+    "f1": 0.803260152642985,
+    "accuracy": 0.86377426194748,
+    "positives": 10052
+  },
+  "MAT": {
+    "precision": 0.8731182795698925,
+    "recall": 0.803960396039604,
+    "f1": 0.8371134020618557,
+    "accuracy": 0.9948458652748328,
+    "positives": 505
+  },
+  "mean_f1": 0.8201867773524203,
+  "baseline_mean_f1": 0.9099999999999999,
+  "delta_vs_published_baseline": -0.08981322264757963,
+  "inference_seconds_per_example": 0.0006786666155598032,
+  "inference_seconds_total": 20.804525099985767,
+  "inference_examples": 30655
+}

@@ -1,9 +1,22 @@
+
 __pycache__/
+*.py[cod]
 .pytest_cache/
 .venv/
+.env
+
+# Ignore temporary and experimental models
 models/*
 !models/.gitkeep
-results/*.json
-results/*.csv
-*.joblib
-.env
+!models/tfidf_full.joblib
+!models/codebert_multitask/
+!models/codebert_multitask/**
+
+# Keep final experiment results only
+results/*
+!results/dataset_audit_full.json
+!results/tfidf_tuning.json
+!results/tfidf_public_test.json
+!results/codebert_tuning.json
+!results/codebert_public_test.json
+!results/comparison.csv

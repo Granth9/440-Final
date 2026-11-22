@@ -1,0 +1,27 @@
+{
+  "weakness": {
+    "precision": 0.876171875,
+    "recall": 0.892558694787107,
+    "f1": 0.8842893751232013,
+    "accuracy": 0.923405643451313,
+    "positives": 10052
+  },
+  "MAT": {
+    "precision": 0.9565217391304348,
+    "recall": 0.5663366336633663,
+    "f1": 0.7114427860696517,
+    "accuracy": 0.9924319034415267,
+    "positives": 505
+  },
+  "mean_f1": 0.7978660805964265,
+  "baseline_mean_f1": 0.9099999999999999,
+  "delta_vs_published_baseline": -0.11213391940357342,
+  "inference_seconds_per_example": 0.004376747003752134,
+  "note": "Public evaluation performed with the final model refit on all public training examples; thresholds were selected only on the internal training split. Do not use these results to tune the model.",
+  "inference_seconds_total": 134.16917940002168,
+  "inference_examples": 30655,
+  "inference_includes_tokenization": true,
+  "inference_batch_size": 8,
+  "inference_max_length": 256,
+  "inference_device": "cuda"
+}

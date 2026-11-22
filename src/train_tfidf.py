@@ -26,7 +26,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--train-limit", type=int)
     p.add_argument("--test-limit", type=int)
-    p.add_argument("--output", default="models/tfidf.joblib")
+    p.add_argument("--output", default="models/tfidf_full.joblib")
     p.add_argument("--evaluate-public-test", action="store_true", help="Do this once after tuning is frozen")
     args = p.parse_args()
     train, test = load_data(args.train_limit, args.test_limit)

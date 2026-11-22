@@ -1,128 +1,201 @@
-# NLBSE 2027 — Beating the Multitask Code Classification Baseline
+# NLBSE 2027 Multitask Code Classification
 
 **Team:** Grant Hernandez and Ryley Wickstrom  
-**Course:** CS480A7 Empirical Software Engineering  
-**Status:** Research plan, implementation starter and report draft. **No trained competition results are claimed.**
+**Course:** CS480A7 — Empirical Software Engineering  
+**Repository:** https://github.com/Granth9/440-Final
 
-## Important topic correction
-Our initial approved idea was to *generate* better code comments. That is NOT the 2027 competition task: NLBSE 2027 requires **classifying functions into two labels** (vulnerability/weakness, self-admitted technical debt). We recommend submitting a revised topic for approval; see `docs/topic_submission.md`. If the instructor insists on comment generation, use `docs/alternate_original_topic.md` and treat it as a separate proposed research paper, not an NLBSE 2027 competition entry.
+## Project overview
 
-## Research question
-Can a modified multitask model improve over the NLBSE 2027 CodeBERT baseline on average F1, without unacceptable runtime/computational cost?
+This project investigates multitask classification of source-code functions for two labels in the NLBSE 2027 Code Comment Classification benchmark:
 
-## Official material
-- Rules: https://nlbse2027.github.io/tools/
-- Code and baseline: https://github.com/nlbse2027/code-comment-classification
-- Dataset: https://huggingface.co/datasets/NLBSE/nlbse27-code-comment-classification
-- Competition notebook: https://colab.research.google.com/drive/1b_EiXx5woyCrDntwbljfi-BwS9Dwvhoa?usp=sharing
-- Organizer baseline (published): F1 weakness 0.939; F1 MAT 0.881; mean 0.910.
+- **Weakness:** whether a function is labeled as containing a software weakness.
+- **MAT:** whether a function is labeled as containing self-admitted technical debt.
 
-## Project tree
-```
-NLBSE2027_Project/
+The research question is whether a lightweight character-level TF-IDF model or a fine-tuned shared-encoder CodeBERT model provides a stronger quality/cost tradeoff relative to the published organizer baseline.
+
+The output label order throughout this project is **`[weakness, MAT]`**. The two labels are independent; both may be positive for the same function.
+
+## Dataset and evaluation protocol
+
+Dataset: [NLBSE/nlbse27-code-comment-classification](https://huggingface.co/datasets/NLBSE/nlbse27-code-comment-classification).
+
+The downloaded dataset contains 214,586 public training examples and 30,655 public evaluation examples. The organizers also describe a separate hidden test set. The project uses an internal 85/15 split of the public training data to select one decision threshold per label. Each final model is then refit on the full public training split. The public evaluation split is used only after model choices and thresholds are frozen.
+
+**The public evaluation has already been run for this project. Do not use its labels or results to select new hyperparameters, thresholds, or model variants.** The saved public-evaluation results are in `results/`.
+
+## Models
+
+### TF-IDF comparison model
+
+- Character-level TF-IDF features using 3–5 character n-grams.
+- `min_df=2`, sublinear term frequency, up to 80,000 features.
+- `MultiOutputClassifier` with class-balanced logistic regression (`max_iter=600`).
+- Separate decision thresholds selected on the internal validation split.
+
+This is a lightweight shared-feature, two-output comparison model. It is not a jointly optimized neural multitask encoder.
+
+### CodeBERT model
+
+- Base encoder: [`microsoft/codebert-base`](https://huggingface.co/microsoft/codebert-base).
+- Two independent sigmoid outputs trained with multilabel binary cross-entropy.
+- Two epochs, learning rate `2e-5`, batch size 8, maximum sequence length 256.
+- Thresholds selected on the internal validation split, followed by a fresh-model refit on all 214,586 public training examples.
+
+## Final public-evaluation results
+
+F1 is the primary predictive metric. The organizer baseline values below are the published reference values, not a baseline model retrained by this team.
+
+| Model | Weakness F1 | MAT F1 | Mean F1 |
+|---|---:|---:|---:|
+| Published organizer baseline | 0.9390 | 0.8810 | 0.9100 |
+| TF-IDF + logistic regression | 0.8033 | **0.8371** | **0.8202** |
+| Multitask CodeBERT | **0.8843** | 0.7114 | 0.7979 |
+
+Additional public-evaluation metrics:
+
+| Model / task | Precision | Recall | Accuracy |
+|---|---:|---:|---:|
+| TF-IDF — weakness | 0.7629 | 0.8481 | 0.8638 |
+| TF-IDF — MAT | 0.8731 | 0.8040 | 0.9948 |
+| CodeBERT — weakness | 0.8762 | 0.8926 | 0.9234 |
+| CodeBERT — MAT | 0.9565 | 0.5663 | 0.9924 |
+
+The TF-IDF model has the higher overall mean F1 in this experiment, while CodeBERT has the higher weakness F1. TF-IDF has the higher MAT F1, primarily due to substantially higher MAT recall. Neither model exceeds the published mean-F1 baseline.
+
+Internal validation results are recorded separately in `results/tfidf_tuning.json` and `results/codebert_tuning.json`; they should not be confused with the public-evaluation results.
+
+## Inference-time measurements
+
+| Model | Public examples | Measured total | Seconds/example | Device |
+|---|---:|---:|---:|---|
+| TF-IDF | 30,655 | 20.805 s | 0.000679 s | CPU |
+| CodeBERT | 30,655 | 134.169 s | 0.004377 s | CUDA GPU |
+
+These are local measurements, not official competition runtime scores. The CodeBERT measurement includes tokenization, batching, GPU inference, and probability conversion; the TF-IDF measurement includes vectorization and prediction. The models were measured on different device types (CPU for TF-IDF and CUDA GPU for CodeBERT), so the observed timing ratio is not a hardware-independent comparison. The official competition cost calculation may also include metrics such as GFLOPs that this project did not measure.
+
+## Dataset audit
+
+The full audit is saved in `results/dataset_audit_full.json`. It reports:
+
+- 808 duplicate rows and 31 conflicting-label function hashes in the training split.
+- 24 duplicate rows and 1 conflicting-label function hash in the public evaluation split.
+- 238 exact function hashes shared across the two splits.
+- 15 project names represented in both splits.
+
+These are descriptive audit findings. Shared hashes or project names alone do not prove leakage or establish that the split is invalid. The project distribution is highly imbalanced toward Linux Kernel examples, which limits claims about generalization to unseen projects.
+
+## Repository structure
+
+```text
+440-Final/
 ├── README.md
 ├── requirements.txt
+├── environment_freeze.txt       # exact local package snapshot, if included
 ├── .gitignore
 ├── src/
-│   ├── common.py                # load data, schema, 2-task metrics, threshold choice
-│   ├── train_tfidf.py          # CPU-friendly shared-vectorizer 2-head comparison
-│   ├── train_transformer.py    # CodeBERT 2-output AI model
-│   └── predict.py              # prediction on source code (TF-IDF)
-├── tests/test_common.py
-├── docs/
-│   ├── research_and_methods.md
-│   ├── experiment_plan.md
-│   ├── timeline_and_tasks.md
-│   ├── topic_submission.md
-│   ├── alternate_original_topic.md
-│   └── submission_checklist.md
-├── report/report_draft.md      # course-required sections; results are placeholders
-├── results/                    # generated when experiments run
-└── models/                     # generated model files
+│   ├── common.py
+│   ├── audit_dataset.py
+│   ├── compare_results.py
+│   ├── predict.py
+│   ├── train_tfidf.py
+│   └── train_transformer.py
+├── tests/
+├── models/
+│   ├── tfidf_full.joblib
+│   └── codebert_multitask/
+└── results/
+    ├── dataset_audit_full.json
+    ├── tfidf_tuning.json
+    ├── tfidf_public_test.json
+    ├── codebert_tuning.json
+    ├── codebert_public_test.json
+    └── comparison.csv
 ```
 
-## Setup (Python 3.10–3.12 recommended)
-```bash
+The final trained artifacts are `models/tfidf_full.joblib` and the contents of `models/codebert_multitask/`. Intermediate smoke-test and threshold-tuning checkpoint folders are not required for inference.
+
+## Setup
+
+Tested with Python 3.11.9 on Windows and an NVIDIA GeForce RTX 4060 Laptop GPU for CodeBERT training/inference. A compatible CUDA-enabled PyTorch installation is required to reproduce GPU timing; CPU execution may be much slower.
+
+```powershell
 python -m venv .venv
-source .venv/bin/activate            # Windows: .venv\\Scripts\\activate
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python -m pytest -q
+python -m pytest -v
 ```
-**Internet is needed** the first time to download the official data and CodeBERT weights. A GPU is recommended for CodeBERT training; CPU training can be slow.
 
-## Run the lightweight experiment first
-A brief smoke run on **random samples** (not a valid final benchmark):
-```bash
-python -m src.train_tfidf --train-limit 2000 --test-limit 200
-```
-Full public training run, without reading the official public test set for model selection:
-```bash
-python -m src.train_tfidf
-```
-After the feature choices and thresholds are frozen, run the **public test** exactly once:
-```bash
-python -m src.train_tfidf --evaluate-public-test
-```
-Results are written to `results/tfidf_tuning.json` and `results/tfidf_public_test.json`.
+The first run may download the Hugging Face dataset and CodeBERT base weights. The saved final model directories are needed for local inference without retraining.
 
-## Run the AI model
-Small **pipeline-only** run:
-```bash
-python -m src.train_transformer --train-limit 500 --test-limit 100 --epochs 1 --batch-size 4
-```
-Full training:
-```bash
-python -m src.train_transformer --epochs 2 --batch-size 8 --max-length 256
-```
-Choose hyperparameters with INTERNAL held-out training data only. Finally, run one official public-test evaluation with the frozen choices:
-```bash
-python -m src.train_transformer --epochs 2 --batch-size 8 --max-length 256 --evaluate-public-test
-```
-**Important:** For a scientifically strict one-time public test, train and freeze your final model first and add a separate load-and-evaluate stage, or retain the same config and seed; rerunning with these commands retrains a model. Record its resulting versions and checkpoint. The supplied transformer implementation is a starter experiment, NOT the organizer's exact scoring interface or a trained submission artifact. For a real competition entry, adapt/verify the official Colab inference adapter and GFLOPs procedure.
+`environment_freeze.txt` records the exact package versions from the team's local environment. `requirements.txt` provides the project's version ranges.
 
-## Predict on a code snippet with the trained lightweight model
-```bash
+## Use the saved TF-IDF model
+
+Predict labels for a code snippet:
+
+```powershell
+python -m src.predict --code "int add(int a, int b) { return a + b; }"
+```
+
+Or read a function from a file:
+
+```powershell
 python -m src.predict --file example_function.txt
-# or
-python -m src.predict --code 'int foo(){return 1;}'
 ```
-Labels returned in `[weakness, MAT]` order. Only load `.joblib` model files you trust.
 
-## Evaluation protocol
-1. Use public `train` (214,586 items, according to the organizer repository) for training and INTERNAL validation/threshold selection.
-2. Use official public `test` (30,655 items, described as a public evaluation set in repository) only after choices are frozen. The organizers hold back a separate 61,311-instance hidden test set.
-3. Report F1, precision, recall, accuracy for each task; mean F1; timing; peak memory/hardware; thresholds; random seed.
-4. Compare against published official F1s, but **do not claim a controlled comparison** until same hardware, data, procedure, and organizer scoring are checked.
-5. Compare base CodeBERT and tuned CodeBERT under identical settings, plus TF-IDF control. Ablate thresholds, sequence length and class-loss handling (if implemented).
-6. Check for leakage, duplicated source functions, project imbalance, label imbalance, and error examples. Never train or tune on the organizers' public test.
+To specify another trusted model artifact:
 
-## Reproducibility and submission
-- Insert your **actual GitHub repo URL** here once created: `https://github.com/REPLACE_WITH_YOUR_ACCOUNT/REPLACE_WITH_YOUR_REPO`
-- Record exact package versions via `python -m pip freeze > environment_freeze.txt` after running.
-- Complete the paper and measured results; the report draft has clearly marked placeholders.
-- Zip **this directory**, plus checkpoint or a stable download reference if the model is too large. Include `requirements.txt` and trained artifacts needed for inference.
-- Use the venue's final 2–4 page style for external entry, but the **course requires at least 4 pages**; references/page constraints can conflict, so maintain separate course and competition versions.
-- Send group topic through course spreadsheet and Discord. We cannot submit to those external accounts from this file.
+```powershell
+python -m src.predict --model models/tfidf_full.joblib --file example_function.txt
+```
 
-## References
-Official competition rules, competition repository, Mock et al. (2024) MADE-WIC, Feng et al. (2020) CodeBERT, Russo et al. (2025) VulSATD. Full references and links are in `docs/research_and_methods.md`.
+The JSON output contains `labels_weakness_MAT` and the two predicted probabilities. Only load trusted local Joblib files.
 
-## Expanded research package (v2)
-The second package includes a protocol with hypotheses and validity threats, a dataset audit, cross-model CSV builder, results tables, a short presentation script and verified sources:
-- `docs/expanded_study_protocol.md` — detailed experiment design, validation, leakage, statistical inference and ablations
-- `docs/results_template.md` — final result tables and evidence-aware language
-- `docs/presentation_script.md` — both-person 3-minute presentation and code demo
-- `docs/references_verified.md` — official requirements and academic sources
-- `src/audit_dataset.py` — label frequencies, duplicate function hashes, cross-split overlap
-- `src/compare_results.py` — convert measured JSON experiment files to one CSV
+## Reproducing the experiments
 
-Run additional steps:
-```bash
-python -m src.audit_dataset --train-limit 3000 --test-limit 500
-# For final analysis: python -m src.audit_dataset
+The following commands retrain models and overwrite the corresponding model/tuning artifacts. They are provided for reproducibility; they are not necessary to use the saved final models.
+
+Train the full TF-IDF model and select thresholds using the internal training validation split:
+
+```powershell
+python -m src.train_tfidf --output models/tfidf_full.joblib
+```
+
+Train CodeBERT, select thresholds internally, and refit on all public training examples:
+
+```powershell
+python -m src.train_transformer --epochs 2 --batch-size 8 --max-length 256 --output-dir models/codebert_multitask
+```
+
+The public-evaluation results in this repository were generated after these model choices were frozen. The public-evaluation commands are intentionally not presented as routine steps because this evaluation has already been consumed for the project. Do not use it for further tuning.
+
+Run the full dataset audit:
+
+```powershell
+python -m src.audit_dataset
+```
+
+Rebuild the comparison CSV from the saved public-evaluation JSON files:
+
+```powershell
 python -m src.compare_results results/tfidf_public_test.json results/codebert_public_test.json
 ```
-These tools **do not generate model predictions or substitute for training**. The comparison command requires existing result files produced by real experiments. When deciding whether to include any optional ablation, implement and test it first; the protocol identifies unimplemented variants explicitly.
 
-## Full execution blueprint
-See `PROJECT_MASTER_OUTLINE.md` for the complete detailed 17-step plan, research questions, experimental controls, paper section outline, table shells, team assignments and submission checklist.
+## Limitations
+
+- Neither in-house model exceeded the published mean-F1 baseline.
+- The two model families have different task-level strengths; the aggregate mean hides the CodeBERT MAT-recall weakness.
+- The public evaluation split contains exact function-hash overlap with the training split and substantial project overlap; the audit does not establish whether this affects the scores.
+- The data is dominated by a small number of projects, particularly Linux Kernel.
+- Runtime measurements were taken on different device types and are not official competition cost scores.
+- The project did not reproduce the organizer's complete scoring pipeline or report GFLOPs, so it does not claim an official competition ranking or a controlled reproduction of the organizer baseline.
+- Results are from one seeded run; repeated-seed uncertainty estimates and cross-project generalization experiments were not completed.
+
+## References
+
+- NLBSE 2027 Tool Competition: https://nlbse2027.github.io/tools/
+- Official benchmark repository: https://github.com/nlbse2027/code-comment-classification
+- Dataset: https://huggingface.co/datasets/NLBSE/nlbse27-code-comment-classification
+- CodeBERT: Feng et al. (2020), *Findings of EMNLP*. https://doi.org/10.18653/v1/2020.findings-emnlp.139
+- MADE-WIC: Mock et al. (2024), *ASE*. https://doi.org/10.1145/3691620.3695348
+- Multitask SATD and vulnerability detection: Russo et al. (2025), *ICPC*. https://doi.org/10.1109/ICPC66645.2025.00017

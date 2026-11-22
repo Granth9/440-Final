@@ -1,0 +1,171 @@
+{
+  "train": {
+    "rows": 214586,
+    "label_counts": {
+      "00": 143022,
+      "01": 1192,
+      "10": 68025,
+      "11": 2347
+    },
+    "label_proportions": {
+      "00": 0.666502,
+      "01": 0.005555,
+      "10": 0.317006,
+      "11": 0.010937
+    },
+    "weakness_positive": 70372,
+    "satd_positive": 3539,
+    "unique_functions": 213778,
+    "duplicate_rows": 808,
+    "conflicting_label_function_hashes": 31,
+    "top_projects": [
+      [
+        "Linux Kernel",
+        163881
+      ],
+      [
+        "Chrome",
+        19744
+      ],
+      [
+        "linux",
+        11547
+      ],
+      [
+        "Chromium",
+        4971
+      ],
+      [
+        "qemu",
+        4315
+      ],
+      [
+        "Mozilla Firefox",
+        3998
+      ],
+      [
+        "FFmpeg",
+        2074
+      ],
+      [
+        "Android",
+        2001
+      ],
+      [
+        "php",
+        643
+      ],
+      [
+        "ImageMagick",
+        393
+      ],
+      [
+        "php-src",
+        353
+      ],
+      [
+        "radare2",
+        279
+      ],
+      [
+        "krb5",
+        177
+      ],
+      [
+        "tcpdump",
+        155
+      ],
+      [
+        "file",
+        55
+      ]
+    ]
+  },
+  "public_evaluation": {
+    "rows": 30655,
+    "label_counts": {
+      "00": 20433,
+      "01": 170,
+      "10": 9717,
+      "11": 335
+    },
+    "label_proportions": {
+      "00": 0.666547,
+      "01": 0.005546,
+      "10": 0.316979,
+      "11": 0.010928
+    },
+    "weakness_positive": 10052,
+    "satd_positive": 505,
+    "unique_functions": 30631,
+    "duplicate_rows": 24,
+    "conflicting_label_function_hashes": 1,
+    "top_projects": [
+      [
+        "Linux Kernel",
+        23376
+      ],
+      [
+        "Chrome",
+        2802
+      ],
+      [
+        "linux",
+        1710
+      ],
+      [
+        "Chromium",
+        715
+      ],
+      [
+        "qemu",
+        593
+      ],
+      [
+        "Mozilla Firefox",
+        542
+      ],
+      [
+        "Android",
+        298
+      ],
+      [
+        "FFmpeg",
+        289
+      ],
+      [
+        "php",
+        91
+      ],
+      [
+        "php-src",
+        69
+      ],
+      [
+        "ImageMagick",
+        68
+      ],
+      [
+        "radare2",
+        37
+      ],
+      [
+        "krb5",
+        28
+      ],
+      [
+        "tcpdump",
+        27
+      ],
+      [
+        "file",
+        10
+      ]
+    ]
+  },
+  "overlap": {
+    "exact_function_hashes": 238,
+    "project_names": 15
+  },
+  "warning": "Shared hashes/projects are descriptive, not evidence of mislabeled data. Do not use public evaluation labels for model selection."
+}

@@ -1,0 +1,43 @@
+{
+  "thresholds": [
+    0.25000000000000006,
+    0.1
+  ],
+  "metrics": {
+    "weakness": {
+      "precision": 0.8705136571268761,
+      "recall": 0.8846153846153846,
+      "f1": 0.8775078701310906,
+      "accuracy": 0.9190070833851125,
+      "positives": 10556
+    },
+    "MAT": {
+      "precision": 0.977491961414791,
+      "recall": 0.5725047080979284,
+      "f1": 0.7220902612826603,
+      "accuracy": 0.9927302100161551,
+      "positives": 531
+    },
+    "mean_f1": 0.7997990657068754,
+    "baseline_mean_f1": 0.9099999999999999,
+    "delta_vs_published_baseline": -0.1102009342931245
+  },
+  "config": {
+    "train_limit": null,
+    "test_limit": null,
+    "epochs": 2.0,
+    "batch_size": 8,
+    "max_length": 256,
+    "learning_rate": 2e-05,
+    "model": "microsoft/codebert-base",
+    "output_dir": "models/codebert_multitask",
+    "evaluate_public_test": true
+  },
+  "limited_run": false,
+  "threshold_fit_examples": 182398,
+  "threshold_tuning_examples": 32188,
+  "final_training_examples": 214586,
+  "threshold_fit_training_seconds": 5928.0927879999945,
+  "full_data_training_seconds": 6551.5432822,
+  "final_model_refit_on_full_training_split": true
+}
